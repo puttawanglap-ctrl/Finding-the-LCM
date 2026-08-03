@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกมหา ค.ร.น. สุดน่ารัก 🐾</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome สำหรับไอคอนน่ารักๆ -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Mali', cursive;
+            background-color: #fdfbf7;
+            background-image: radial-gradient(#ffd1dc 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: #4a4a4a;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 10px 25px rgba(255, 182, 193, 0.4);
+            border: 4px solid #ffb6c1;
+        }
+
+        .btn-cute {
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 0px rgba(0,0,0,0.1);
+        }
+        
+        .btn-cute:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0px rgba(0,0,0,0.15);
+        }
+        
+        .btn-cute:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0px rgba(0,0,0,0.1);
+        }
+
+        /* แอนิเมชันสำหรับตัวเลข */
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .pop-in {
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* สไตล์ตารางหารสั้น */
+        .division-grid {
+            display: grid;
+            grid-template-columns: auto minmax(100px, auto);
+            gap: 10px;
+            align-items: center;
+        }
+
+        .divisor-cell {
+            text-align: right;
+            padding-right: 15px;
+            font-weight: bold;
+            color: #ff6b6b;
+            font-size: 1.5rem;
+        }
+
+        .dividend-cell {
+            border-left: 3px solid #4ecdc4;
+            border-bottom: 3px solid #4ecdc4;
+            padding: 10px;
+            display: flex;
+            gap: 15px;
+            font-size: 1.5rem;
+        }
+
+        .number-box {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 8px 15px;
+            min-width: 60px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .number-box.highlight {
+            background: #fff3cd;
+            border-color: #ffecb5;
+            color: #856404;
+        }
+
+        .number-box.result-factor {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+            animation: pulse 2s infinite;
+        }
+        
+        .number-box.remainder {
+            background: #cce5ff;
+            border-color: #b8daff;
+            color: #004085;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* มาสคอต */
+        .mascot {
+            font-size: 3rem;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* หน้าจอเริ่มต้นและจบเกม */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            transition: opacity 0.3s;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+
+        /* เครื่องคิดเลขจำลอง */
+        .input-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 250px;
+            margin: 0 auto;
+        }
+        
+        .pad-btn {
+            background: #f1f3f5;
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #495057;
+            cursor: pointer;
+            box-shadow: 0 4px #dee2e6;
+        }
+        
+        .pad-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 #dee2e6;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff6b6b;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- หน้าจอเริ่มเกม -->
+    <div id="startScreen" class="overlay">
+        <div class="mascot mb-4">🦊</div>
+        <h1 class="text-4xl md:text-5xl font-bold text-pink-500 mb-6 text-center leading-relaxed">
+            ผจญภัยหา ค.ร.น. <br>
+            <span class="text-2xl text-gray-600">ด้วยวิธีตั้งหารสั้น</span>
+        </h1>
+        <div class="bg-white p-6 rounded-2xl border-2 border-dashed border-pink-300 max-w-md text-center mb-8 shadow-sm">
+            <h3 class="font-bold text-lg mb-2 text-pink-600">🎯 วิธีเล่น:</h3>
+            <ul class="text-left text-gray-700 space-y-2 text-sm">
+                <li>1. หาจำนวนเฉพาะ (เช่น 2, 3, 5, 7) ที่หารตัวเลขโจทย์ได้อย่างน้อย 2 ตัว</li>
+                <li>2. พิมพ์ตัวหารลงไป แล้วดูผลหารที่ได้</li>
+                <li>3. ทำไปเรื่อยๆ จนกว่าจะไม่มีจำนวนใดหารได้อย่างน้อย 2 ตัวอีก</li>
+                <li>4. จับ <span class="text-green-600 font-bold">ตัวหาร</span> และ <span class="text-blue-600 font-bold">เศษที่เหลือ</span> มาคูณกันทั้งหมด!</li>
+            </ul>
+        </div>
+        <button onclick="startGame()" class="btn-cute bg-gradient-to-r from-pink-400 to-pink-500 text-white font-bold py-3 px-10 rounded-full text-xl shadow-lg border-2 border-pink-600">
+            เริ่มเล่นกันเลย! <i class="fas fa-play ml-2"></i>
+        </button>
+    </div>
+
+    <!-- คอนเทนเนอร์เกมหลัก -->
+    <div id="gameContainer" class="game-container p-6 md:p-8 hidden relative">
+        
+        <!-- ส่วนหัว: ด่านและคะแนน -->
+        <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-100">
+            <div class="text-lg font-bold text-gray-600">
+                ด่าน: <span id="levelDisplay" class="text-pink-500 text-2xl">1</span>/5
+            </div>
+            <div class="mascot text-2xl" id="characterMascot">🐰</div>
+            <div class="text-lg font-bold text-gray-600">
+                คะแนน: <span id="scoreDisplay" class="text-yellow-500 text-2xl">0</span> ⭐️
+            </div>
+        </div>
+
+        <!-- พื้นที่แสดงการตั้งหาร -->
+        <div class="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 mb-8 min-h-[300px] flex flex-col justify-center items-center">
+            
+            <h2 class="text-xl md:text-2xl font-bold text-center mb-8 text-indigo-800">
+                จงหา ค.ร.น. ของ <span id="questionText" class="text-pink-500"></span>
+            </h2>
+
+            <div id="divisionArea" class="flex flex-col gap-2 w-full max-w-md mx-auto">
+                <!-- แถวของการหารจะถูกเพิ่มที่นี่ด้วย JS -->
+            </div>
+
+            <!-- พื้นที่แสดงผลสรุป (ซ่อนไว้ก่อน) -->
+            <div id="summaryArea" class="mt-8 p-4 bg-green-50 border-2 border-green-200 rounded-xl w-full text-center hidden pop-in">
+                <p class="text-lg font-bold text-green-800 mb-2">🎉 หารเสร็จแล้ว!</p>
+                <p class="text-md text-gray-700">ค.ร.น. คือผลคูณของ <span class="text-green-600 font-bold">ตัวหาร (ด้านหน้า)</span> และ <span class="text-blue-600 font-bold">ผลหารที่เหลือ (ด้านล่าง)</span></p>
+                <div id="equationDisplay" class="text-2xl font-bold text-indigo-600 mt-4 tracking-wider">
+                    <!-- ตัวเลขสมการจะแสดงที่นี่ -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ส่วนควบคุม: ปุ่มกดตัวเลข -->
+        <div id="controlsArea" class="text-center">
+            <p id="instructionText" class="text-lg font-bold text-gray-700 mb-4 h-8 transition-all">
+                จำนวนเฉพาะใดที่หารได้อย่างน้อย 2 ตัว? 🤔
+            </p>
+            
+            <!-- กรณีต้องการรับค่าตัวหาร -->
+            <div id="divisorInput" class="">
+                <div class="flex justify-center items-center gap-3 mb-4">
+                    <input type="number" id="numInput" class="w-24 h-14 text-center text-2xl font-bold border-2 border-pink-300 rounded-xl focus:outline-none focus:border-pink-500 bg-white" readonly placeholder="?">
+                    <button onclick="checkDivisor()" class="btn-cute bg-green-400 hover:bg-green-500 text-white font-bold h-14 px-6 rounded-xl border-b-4 border-green-600">
+                        ตกลง
+                    </button>
+                    <button onclick="clearInput()" class="btn-cute bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold h-14 px-4 rounded-xl border-b-4 border-gray-500">
+                        <i class="fas fa-backspace"></i>
+                    </button>
+                </div>
+                
+                <div class="input-pad">
+                    <button class="pad-btn" onclick="addNumber('1')">1</button>
+                    <button class="pad-btn" onclick="addNumber('2')">2</button>
+                    <button class="pad-btn" onclick="addNumber('3')">3</button>
+                    <button class="pad-btn" onclick="addNumber('4')">4</button>
+                    <button class="pad-btn" onclick="addNumber('5')">5</button>
+                    <button class="pad-btn" onclick="addNumber('6')">6</button>
+                    <button class="pad-btn" onclick="addNumber('7')">7</button>
+                    <button class="pad-btn" onclick="addNumber('8')">8</button>
+                    <button class="pad-btn" onclick="addNumber('9')">9</button>
+                    <button class="pad-btn col-start-2" onclick="addNumber('0')">0</button>
+                </div>
+                
+                <div class="mt-6">
+                    <button onclick="finishDivision()" id="btnFinish" class="btn-cute bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-3 px-6 rounded-full border-b-4 border-yellow-600 shadow-md">
+                        หารต่อไม่ได้แล้ว (หาคำตอบ) <i class="fas fa-flag-checkered ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- กรณีหารเสร็จแล้ว ให้หาผลคูณสุดท้าย -->
+            <div id="finalAnswerInput" class="hidden">
+                <p class="text-pink-600 font-bold mb-4">คำนวณผลคูณทั้งหมดเลย!</p>
+                <div class="flex justify-center items-center gap-3">
+                    <input type="number" id="finalAns" class="w-32 h-14 text-center text-2xl font-bold border-2 border-indigo-300 rounded-xl focus:outline-none focus:border-indigo-500" placeholder="ค.ร.น.">
+                    <button onclick="checkFinalAnswer()" class="btn-cute bg-indigo-500 hover:bg-indigo-600 text-white font-bold h-14 px-8 rounded-xl border-b-4 border-indigo-700">
+                        ตอบ! ✨
+                    </button>
+                </div>
+            </div>
+            
+            <!-- ปุ่มไปด่านต่อไป -->
+            <div id="nextLevelBtn" class="hidden mt-6">
+                <button onclick="nextLevel()" class="btn-cute bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-10 rounded-full text-xl shadow-lg border-2 border-pink-700">
+                    ไปด่านต่อไป <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- หน้าจอจบเกม -->
+    <div id="endScreen" class="overlay hidden">
+        <div class="mascot text-6xl mb-4">🏆</div>
+        <h2 class="text-4xl font-bold text-yellow-500 mb-2 text-center">เก่งมาก!</h2>
+        <p class="text-2xl text-gray-700 mb-6">คุณทำสำเร็จทุกด่านแล้ว</p>
+        
+        <div class="bg-white p-8 rounded-3xl border-4 border-yellow-400 text-center mb-8 shadow-xl max-w-sm w-full">
+            <p class="text-gray-500 text-lg mb-2">คะแนนรวมของคุณ</p>
+            <p class="text-6xl font-bold text-pink-500" id="finalScore">0</p>
+            <p class="text-yellow-500 text-2xl mt-2">⭐️⭐️⭐️</p>
+        </div>
+        
+        <button onclick="resetGame()" class="btn-cute bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full text-xl shadow-lg border-2 border-green-700">
+            เล่นอีกครั้ง <i class="fas fa-redo ml-2"></i>
+        </button>
+    </div>
+
+    <!-- ข้อความแจ้งเตือน -->
+    <div id="toast" class="toast">ข้อความ</div>
+
+    <script>
+        // ข้อมูลด่านต่างๆ
+        const levels = [
+            { numbers: [4, 6], answer: 12 },          // ง่าย 2 จำนวน
+            { numbers: [6, 9], answer: 18 },          // ง่าย 2 จำนวน
+            { numbers: [8, 12, 16], answer: 48 },     // ปานกลาง 3 จำนวน
+            { numbers: [10, 15, 20], answer: 60 },    // ปานกลาง 3 จำนวน
+            { numbers: [12, 18, 24], answer: 72 }     // ยาก 3 จำนวน
+        ];
+
+        // ตัวแปรสถานะเกม
+        let currentLevelIndex = 0;
+        let score = 0;
+        let currentNumbers = []; // ตัวเลขชุดปัจจุบันที่กำลังหาร
+        let divisorsUsed = [];   // เก็บตัวหารที่ใช้ไปแล้ว
+        let divisionSteps = [];  // เก็บประวัติการหาร [{divisor: 2, dividends: [4,6], results: [2,3]}]
+        
+        const mascots = ['🦊', '🐰', '🐼', '🐨', '🐯'];
+
+        // DOM Elements
+        const startScreen = document.getElementById('startScreen');
+        const gameContainer = document.getElementById('gameContainer');
+        const endScreen = document.getElementById('endScreen');
+        const divisionArea = document.getElementById('divisionArea');
+        const numInput = document.getElementById('numInput');
+        const instructionText = document.getElementById('instructionText');
+        
+        // ฟังก์ชันระบบ UI ทั่วไป
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.backgroundColor = isError ? '#ff6b6b' : '#51cf66';
+            toast.style.opacity = '1';
+            
+            // ขยับนิดนึงให้ดูมีชีวิตชีวา
+            toast.style.transform = 'translate(-50%, -10px)';
+            setTimeout(() => toast.style.transform = 'translate(-50%, 0)', 100);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+            }, 3000);
+        }
+
+        function addNumber(num) {
+            if(numInput.value.length < 3) {
+                numInput.value += num;
+            }
+        }
+
+        function clearInput() {
+            numInput.value = '';
+        }
+
+        // เริ่มเกม
+        function startGame() {
+            startScreen.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+            resetGameVariables();
+            loadLevel(currentLevelIndex);
+        }
+
+        function resetGameVariables() {
+            currentLevelIndex = 0;
+            score = 0;
+            updateScoreDisplay();
+        }
+
+        function updateScoreDisplay() {
+            document.getElementById('scoreDisplay').textContent = score;
+        }
+
+        // โหลดด่านใหม่
+        function loadLevel(index) {
+            if (index >= levels.length) {
+                showEndScreen();
+                return;
+            }
+
+            // ตั้งค่าเริ่มต้นด่าน
+            const levelData = levels[index];
+            currentNumbers = [...levelData.numbers];
+            divisorsUsed = [];
+            divisionSteps = [];
+            
+            // อัปเดต UI
+            document.getElementById('levelDisplay').textContent = index + 1;
+            document.getElementById('characterMascot').textContent = mascots[index % mascots.length];
+            document.getElementById('questionText').textContent = levelData.numbers.join(', ');
+            
+            // รีเซ็ตพื้นที่ต่างๆ
+            divisionArea.innerHTML = '';
+            document.getElementById('summaryArea').classList.add('hidden');
+            document.getElementById('controlsArea').classList.remove('hidden');
+            document.getElementById('divisorInput').classList.remove('hidden');
+            document.getElementById('finalAnswerInput').classList.add('hidden');
+            document.getElementById('nextLevelBtn').classList.add('hidden');
+            document.getElementById('btnFinish').classList.remove('hidden');
+            clearInput();
+            
+            instructionText.textContent = "หาจำนวนเฉพาะที่หารได้อย่างน้อย 2 ตัว 🤔";
+            instructionText.className = "text-lg font-bold text-gray-700 mb-4 h-8 transition-all";
+            
+            // วาดแถวแรก
+            renderDivisionRow(currentNumbers, true);
+        }
+
+        function renderDivisionRow(numbers, isFirstRow = false, divisor = null) {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'division-grid pop-in';
+            
+            // ส่วนตัวหาร (คอลัมน์ซ้าย)
+            const divisorDiv = document.createElement('div');
+            divisorDiv.className = 'divisor-cell';
+            if (divisor !== null) {
+                divisorDiv.textContent = divisor;
+            }
+            rowDiv.appendChild(divisorDiv);
+
+            // ส่วนตัวตั้ง/ผลหาร (คอลัมน์ขวา)
+            const dividendDiv = document.createElement('div');
+            dividendDiv.className = 'dividend-cell';
+            
+            numbers.forEach((num, idx) => {
+                const numSpan = document.createElement('div');
+                numSpan.className = 'number-box';
+                numSpan.textContent = num;
+                // เก็บ id ไว้สำหรับอ้างอิงตอนจบเกมเพื่อทำไฮไลท์
+                numSpan.id = `num-${divisionSteps.length}-${idx}`;
+                dividendDiv.appendChild(numSpan);
+            });
+            
+            rowDiv.appendChild(dividendDiv);
+            divisionArea.appendChild(rowDiv);
+        }
+
+        // ตรวจสอบว่าสามารถหารต่อได้หรือไม่ (มีอย่างน้อย 2 ตัวที่หารลงตัวด้วยเลขใดๆ)
+        function canDivideFurther(numbers) {
+            const max = Math.max(...numbers);
+            // เช็คจำนวนเฉพาะเบื้องต้น
+            const primes = [2, 3, 5, 7, 11, 13, 17, 19];
+            
+            for (let p of primes) {
+                if (p > max) break;
+                let divisibleCount = 0;
+                for (let num of numbers) {
+                    if (num % p === 0) divisibleCount++;
+                }
+                if (divisibleCount >= 2) return true;
+            }
+            // ถ้ายิ่งใหญ่กว่านี้ ลองลูปดู
+            for (let i = 21; i <= max; i++) {
+                let divisibleCount = 0;
+                for (let num of numbers) {
+                    if (num % i === 0) divisibleCount++;
+                }
+                if (divisibleCount >= 2) return true;
+            }
+            return false;
+        }
+
+        // ตรวจสอบตัวหารที่ผู้ใช้ป้อนเข้ามา
+        function checkDivisor() {
+            const inputVal = parseInt(numInput.value);
+            
+            if (isNaN(inputVal) || inputVal < 2) {
+                showToast("กรุณาใส่ตัวเลขที่มากกว่า 1", true);
+                clearInput();
+                return;
+            }
+
+            // ตรวจสอบว่าเป็นจำนวนเฉพาะหรือไม่ (ตามหลักสูตรประถมมักให้ใช้จำนวนเฉพาะ)
+            // แต่เพื่อให้ยืดหยุ่น อนุญาตเลขอื่นได้ถ้าหารลงตัวอย่างน้อย 2 จำนวน
+            
+            let divisibleCount = 0;
+            let nextNumbers = [];
+            
+            for (let i = 0; i < currentNumbers.length; i++) {
+                if (currentNumbers[i] % inputVal === 0) {
+                    divisibleCount++;
+                    nextNumbers.push(currentNumbers[i] / inputVal);
+                } else {
+                    nextNumbers.push(currentNumbers[i]); // ดึงลงมา
+                }
+            }
+
+            if (divisibleCount >= 2) {
+                // ถูกต้อง!
+                playCorrectSound();
+                score += 10;
+                updateScoreDisplay();
+                showToast("เยี่ยมมาก! หารลงตัว " + divisibleCount + " จำนวน");
+                
+                // เก็บประวัติ
+                divisionSteps.push({
+                    divisor: inputVal,
+                    dividends: [...currentNumbers],
+                    results: [...nextNumbers]
+                });
+                
+                divisorsUsed.push(inputVal);
+                currentNumbers = nextNumbers;
+                
+                // อัปเดต UI แถวก่อนหน้า (เพิ่มตัวหารเข้าไป)
+                const lastRow = divisionArea.lastElementChild;
+                lastRow.querySelector('.divisor-cell').textContent = inputVal;
+                
+                // เรนเดอร์แถวใหม่ (ผลลัพธ์)
+                renderDivisionRow(currentNumbers);
+                clearInput();
+                
+                // เช็คว่าหารต่อได้อีกไหม
+                if (!canDivideFurther(currentNumbers)) {
+                    instructionText.textContent = "หารต่อไม่ได้แล้ว! กดปุ่มสีเหลืองเลย";
+                    instructionText.className = "text-lg font-bold text-green-600 mb-4 h-8 transition-all animate-bounce";
+                    // แนะนำให้จบ
+                } else {
+                    instructionText.textContent = "ทำต่อไป! หาตัวหารได้อีกไหม?";
+                }
+
+            } else if (divisibleCount === 1) {
+                showToast(`เลข ${inputVal} หารลงตัวแค่ 1 จำนวน ต้องหารได้อย่างน้อย 2 จำนวนนะ`, true);
+                clearInput();
+            } else {
+                showToast(`เลข ${inputVal} หารไม่ลงตัวเลย ลองเลขอื่นดูนะ`, true);
+                clearInput();
+            }
+        }
+
+        function finishDivision() {
+            if (canDivideFurther(currentNumbers)) {
+                showToast("ยังหารต่อได้อีกนะ! ลองหาดูดีๆ", true);
+                return;
+            }
+
+            // ถ้าหารต่อไม่ได้แล้วจริงๆ
+            document.getElementById('divisorInput').classList.add('hidden');
+            document.getElementById('summaryArea').classList.remove('hidden');
+            document.getElementById('finalAnswerInput').classList.remove('hidden');
+            
+            instructionText.textContent = "เก่งมาก! ตอนนี้มาหา ค.ร.น. กัน";
+            instructionText.className = "text-lg font-bold text-pink-600 mb-4 h-8 transition-all";
+
+            highlightFactors();
+        }
+
+        function highlightFactors() {
+            let equationHTML = "";
+            let factorsToMultiply = [];
+
+            // ไฮไลท์ตัวหาร (คอลัมน์ซ้าย)
+            const rows = divisionArea.querySelectorAll('.division-grid');
+            rows.forEach((row, index) => {
+                const divisorCell = row.querySelector('.divisor-cell');
+                if (divisorCell.textContent) {
+                    divisorCell.classList.add('result-factor');
+                    factorsToMultiply.push(parseInt(divisorCell.textContent));
+                    equationHTML += `<span class="text-green-600">${divisorCell.textContent}</span> &times; `;
+                }
+            });
+
+            // ไฮไลท์ผลหารบรรทัดสุดท้าย (ข้ามเลข 1 ถ้ามีตัวอื่น)
+            const lastRowNumbers = currentNumbers;
+            let lastRowHTML = "";
+            let remainders = [];
+            
+            const lastRowDivs = rows[rows.length - 1].querySelectorAll('.number-box');
+            lastRowDivs.forEach((div, idx) => {
+                div.classList.add('remainder');
+                const num = parseInt(div.textContent);
+                remainders.push(num);
+            });
+
+            // สร้างสมการ
+            remainders.forEach((num, idx) => {
+                equationHTML += `<span class="text-blue-600">${num}</span>`;
+                if (idx < remainders.length - 1) {
+                    equationHTML += " &times; ";
+                }
+            });
+
+            document.getElementById('equationDisplay').innerHTML = equationHTML + " = ?";
+            
+            // เตรียมรับคำตอบสุดท้าย
+            document.getElementById('finalAns').value = '';
+            document.getElementById('finalAns').focus();
+        }
+
+        function checkFinalAnswer() {
+            const userAnswer = parseInt(document.getElementById('finalAns').value);
+            const correctAnswer = levels[currentLevelIndex].answer;
+
+            if (userAnswer === correctAnswer) {
+                // ถูกต้อง
+                playWinSound();
+                score += 50;
+                updateScoreDisplay();
+                
+                // อัปเดตสมการให้สมบูรณ์
+                const eqDisplay = document.getElementById('equationDisplay');
+                eqDisplay.innerHTML = eqDisplay.innerHTML.replace("= ?", `= <span class="text-pink-600 text-3xl pop-in inline-block">${correctAnswer}</span>`);
+                
+                document.getElementById('finalAnswerInput').classList.add('hidden');
+                document.getElementById('nextLevelBtn').classList.remove('hidden');
+                
+                instructionText.textContent = "🎉 ยอดเยี่ยม! ตอบถูกต้อง 🎉";
+                instructionText.className = "text-xl font-bold text-green-600 mb-4 h-8 transition-all animate-bounce";
+                
+                createConfetti();
+                
+            } else {
+                showToast("อ๊ะ! ยังไม่ถูก ลองคูณเลขดูใหม่นะ", true);
+            }
+        }
+
+        function nextLevel() {
+            currentLevelIndex++;
+            loadLevel(currentLevelIndex);
+        }
+
+        function showEndScreen() {
+            gameContainer.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+            document.getElementById('finalScore').textContent = score;
+            createConfetti();
+        }
+
+        function resetGame() {
+            endScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        }
+
+        // เสียงจำลอง (Visual feedback แทนเสียงจริงเพื่อความง่ายในการเล่นบนเบราว์เซอร์)
+        function playCorrectSound() {
+            const body = document.body;
+            body.style.backgroundColor = "#e8f5e9";
+            setTimeout(() => body.style.backgroundColor = "#fdfbf7", 200);
+        }
+
+        function playWinSound() {
+            const body = document.body;
+            body.style.backgroundColor = "#fff0f5";
+            setTimeout(() => body.style.backgroundColor = "#fdfbf7", 300);
+        }
+
+        // สร้างเอฟเฟกต์ Confetti ง่ายๆ
+        function createConfetti() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#ff9f43', '#54a0ff'];
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.position = 'fixed';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.top = '-10px';
+                confetti.style.width = '10px';
+                confetti.style.height = '10px';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                confetti.style.zIndex = '1000';
+                confetti.style.pointerEvents = 'none';
+                
+                // Animation
+                const duration = Math.random() * 3 + 2;
+                confetti.style.transition = `top ${duration}s ease-in, transform ${duration}s linear, opacity ${duration}s ease-out`;
+                
+                document.body.appendChild(confetti);
+                
+                // Trigger animation
+                setTimeout(() => {
+                    confetti.style.top = '100vh';
+                    confetti.style.transform = `rotate(${Math.random() * 360 * 5}deg) translateX(${Math.random() * 200 - 100}px)`;
+                    confetti.style.opacity = '0';
+                }, 10);
+                
+                // Cleanup
+                setTimeout(() => {
+                    confetti.remove();
+                }, duration * 1000 + 100);
+            }
+        }
+
+        // อนุญาตให้กด Enter แทนการคลิกปุ่ม
+        document.getElementById('numInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkDivisor();
+            }
+        });
+        
+        document.getElementById('finalAns').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkFinalAnswer();
+            }
+        });
+
+    </script>
+</body>
+</html>
